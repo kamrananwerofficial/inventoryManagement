@@ -1,0 +1,30 @@
+<div class="login-wrapper">
+  <div class="login-box">
+    <h2>Login</h2>
+
+    <form (ngSubmit)="loginWithGoogle()" #loginForm="ngForm">
+      <input
+        type="email"
+        placeholder="Email"
+        name="email"
+        [(ngModel)]="email"
+        required
+      />
+      <input
+        type="password"
+        placeholder="Password"
+        name="password"
+        [(ngModel)]="password"
+        required
+      />
+      <button type="submit" [disabled]="!loginForm.valid">Login</button>
+    </form>
+
+    <div class="divider">or</div>
+
+    <button class="google-btn" (click)="loginWithGoogle()">
+      <img width="24px" src="assets/google-icon.svg" /> Sign in with Google
+    </button>
+
+  </div>
+</div>

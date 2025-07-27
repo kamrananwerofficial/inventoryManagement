@@ -1,0 +1,111 @@
+
+<div class="container-fluid py-4">
+  <div class="card">
+    <div class="card-header">
+      <h2>{{ isEditMode ? 'Edit' : 'Add New' }} Item</h2>
+    </div>
+    
+    <div class="card-body">
+      <form [formGroup]="itemForm" (ngSubmit)="onSubmit()">
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="name" class="form-label">Item Name*</label>
+            <input type="text" class="form-control" id="name" formControlName="name"
+                  [ngClass]="{'is-invalid': isFieldInvalid('name')}">
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('name')">
+              {{ getErrorMessage('name') }}
+            </div>
+          </div>
+          
+          <div class="col-md-6">
+            <label for="sku" class="form-label">SKU*</label>
+            <input type="text" class="form-control" id="sku" formControlName="sku"
+                  [ngClass]="{'is-invalid': isFieldInvalid('sku')}">
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('sku')">
+              {{ getErrorMessage('sku') }}
+            </div>
+          </div>
+        </div>
+        
+        <div class="row mb-3">
+          <div class="col-md-12">
+            <label for="description" class="form-label">Description</label>
+            <textarea class="form-control" id="description" rows="3" formControlName="description"></textarea>
+          </div>
+        </div>
+        
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="category" class="form-label">Category*</label>
+            <div class="input-group">
+              <input type="text" class="form-control" id="category" formControlName="category" 
+                    list="categoryOptions" [ngClass]="{'is-invalid': isFieldInvalid('category')}">
+              <datalist id="categoryOptions">
+                <option *ngFor="let category of categories" [value]="category">{{ category }}</option>
+              </datalist>
+              <div class="invalid-feedback" *ngIf="isFieldInvalid('category')">
+                {{ getErrorMessage('category') }}
+              </div>
+            </div>
+            <small class="form-text text-muted">Type a new category or select from existing ones</small>
+          </div>
+          
+          <div class="col-md-6">
+            <label for="reorderLevel" class="form-label">Reorder Level*</label>
+            <input type="number" class="form-control" id="reorderLevel" formControlName="reorderLevel"
+                  [ngClass]="{'is-invalid': isFieldInvalid('reorderLevel')}">
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('reorderLevel')">
+              {{ getErrorMessage('reorderLevel') }}
+            </div>
+            <small class="form-text text-muted">Minimum stock level before reordering</small>
+          </div>
+        </div>
+        
+        <div class="row mb-3">
+          <div class="col-md-4">
+            <label for="quantity" class="form-label">Initial Quantity*</label>
+            <input type="number" class="form-control" id="quantity" formControlName="quantity"
+                  [ngClass]="{'is-invalid': isFieldInvalid('quantity')}" [readonly]="isEditMode">
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('quantity')">
+              {{ getErrorMessage('quantity') }}
+            </div>
+            <small class="form-text text-muted" *ngIf="isEditMode">
+              Use sales/purchases to adjust quantity after creation
+            </small>
+          </div>
+          
+          <div class="col-md-4">
+            <label for="costPrice" class="form-label">Cost Price*</label>
+            <div class="input-group">
+              <span class="input-group-text">$</span>
+              <input type="number" class="form-control" id="costPrice" formControlName="costPrice"
+                    [ngClass]="{'is-invalid': isFieldInvalid('costPrice')}" step="0.01">
+              <div class="invalid-feedback" *ngIf="isFieldInvalid('costPrice')">
+                {{ getErrorMessage('costPrice') }}
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-4">
+            <label for="unitPrice" class="form-label">Selling Price*</label>
+            <div class="input-group">
+              <span class="input-group-text">$</span>
+              <input type="number" class="form-control" id="unitPrice" formControlName="unitPrice"
+                    [ngClass]="{'is-invalid': isFieldInvalid('unitPrice')}" step="0.01">
+              <div class="invalid-feedback" *ngIf="isFieldInvalid('unitPrice')">
+                {{ getErrorMessage('unitPrice') }}
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="d-flex justify-content-end mt-4">
+          <button type="button" class="btn btn-secondary me-2" (click)="onCancel()">Cancel</button>
+          <button type="submit" class="btn btn-primary">
+            {{ isEditMode ? 'Update' : 'Save' }} Item
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

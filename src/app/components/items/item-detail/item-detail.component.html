@@ -1,0 +1,176 @@
+
+<div class="container-fluid py-4" *ngIf="item">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>{{ item.name }}</h1>
+    <div>
+      <button class="btn btn-outline-primary me-2" (click)="openAdjustmentModal(adjustmentModal)">
+        <i class="fas fa-balance-scale me-2"></i>Adjust Stock
+      </button>
+      <a [routerLink]="['/items/edit', item.id]" class="btn btn-primary">
+        <i class="fas fa-edit me-2"></i>Edit Item
+      </a>
+    </div>
+  </div>
+  
+  <div class="row">
+    <!-- Item Details Card -->
+    <div class="col-md-4 mb-4">
+      <div class="card h-100">
+        <div class="card-header">
+          <h5 class="card-title mb-0">Item Details</h5>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <span class="badge rounded-pill" [ngClass]="getStockStatus().class">
+              {{ getStockStatus().status }}
+            </span>
+          </div>
+          
+          <table class="table table-borderless">
+            <tbody>
+              <tr>
+                <th scope="row">SKU</th>
+                <td>{{ item.sku }}</td>
+              </tr>
+              <tr>
+                <th scope="row">Category</th>
+                <td>{{ item.category }}</td>
+              </tr>
+              <tr>
+                <th scope="row">Current Stock</th>
+                <td>{{ item.quantity }}</td>
+              </tr>
+              <tr>
+                <th scope="row">Reorder Level</th>
+                <td>{{ item.reorderLevel }}</td>
+              </tr>
+              <tr>
+                <th scope="row">Cost Price</th>
+                <td>${{ item.costPrice | number:'1.2-2' }}</td>
+              </tr>
+              <tr>
+                <th scope="row">Selling Price</th>
+                <td>${{ item.unitPrice | number:'1.2-2' }}</td>
+              </tr>
+              <tr>
+                <th scope="row">Profit Margin</th>
+                <td>{{ ((item.unitPrice - item.costPrice) / item.unitPrice * 100) | number:'1.2-2' }}%</td>
+              </tr>
+              <tr>
+                <th scope="row">Stock Value</th>
+                <td>${{ item.quantity * item.unitPrice | number:'1.2-2' }}</td>
+              </tr>
+              <tr>
+                <th scope="row">Created</th>
+                <td>{{ item.createdAt | date:'medium' }}</td>
+              </tr>
+              <tr>
+                <th scope="row">Last Updated</th>
+                <td>{{ item.updatedAt | date:'medium' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Description Card -->
+    <div class="col-md-8 mb-4">
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="card-title mb-0">Description</h5>
+        </div>
+        <div class="card-body">
+          <p *ngIf="item.description">{{ item.description }}</p>
+          <p *ngIf="!item.description" class="text-muted">No description available</p>
+        </div>
+      </div>
+      
+      <!-- Transaction History Card -->
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">Transaction History</h5>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Quantity</th>
+                  <th>Unit Price</th>
+                  <th>Total</th>
+                  <th>Reference</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let transaction of itemTransactions">
+                  <td>{{ transaction.date | date:'short' }}</td>
+                  <td>
+                    <span [ngClass]="getTransactionTypeClass(transaction.type)">
+                      {{ transaction.type }}
+                    </span>
+                  </td>
+                  <td [ngClass]="getTransactionTypeClass(transaction.type)">
+                    {{ getTransactionQuantityPrefix(transaction.type) }}{{ transaction.quantity }}
+                  </td>
+                  <td>${{ transaction.unitPrice | number:'1.2-2' }}</td>
+                  <td>${{ transaction.totalAmount | number:'1.2-2' }}</td>
+                  <td>{{ transaction.reference }}</td>
+                </tr>
+                <tr *ngIf="itemTransactions.length === 0">
+                  <td colspan="6" class="text-center py-3">
+                    <div class="alert alert-info mb-0">
+                      No transaction history available for this item.
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Stock Adjustment Modal -->
+<ng-template #adjustmentModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Adjust Stock Quantity</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+  </div>
+  <div class="modal-body">
+    <form [formGroup]="adjustmentForm">
+      <div class="mb-3">
+        <label for="quantity" class="form-label">Quantity Change</label>
+        <input type="number" class="form-control" id="quantity" formControlName="quantity">
+        <div class="form-text">
+          Use positive numbers to add stock, negative to remove stock.
+        </div>
+      </div>
+      <div class="mb-3">
+        <label for="notes" class="form-label">Reason for Adjustment</label>
+        <textarea class="form-control" id="notes" rows="3" formControlName="notes"></textarea>
+      </div>
+    </form>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="modal.dismiss()">Cancel</button>
+    <button type="button" class="btn btn-primary" (click)="submitAdjustment()" 
+            [disabled]="adjustmentForm.invalid">
+      Apply Adjustment
+    </button>
+  </div>
+</ng-template>
+
+<!-- Not Found Message -->
+<div class="container-fluid py-4" *ngIf="!item">
+  <div class="alert alert-danger">
+    <h4 class="alert-heading">Item Not Found</h4>
+    <p>The requested item could not be found. It may have been deleted or the ID is invalid.</p>
+    <hr>
+    <a routerLink="/items" class="btn btn-outline-danger">Return to Items List</a>
+  </div>
+</div>

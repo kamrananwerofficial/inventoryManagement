@@ -1,0 +1,176 @@
+
+<div class="container-fluid py-4">
+  <h1 class="mb-4">Dashboard</h1>
+  
+  <!-- Summary Cards -->
+  <div class="row mb-4">
+    <div class="col-md-3 mb-3">
+      <div class="card bg-primary text-white h-100">
+        <div class="card-body">
+          <h5 class="card-title">Total Items</h5>
+          <h2 class="display-4">{{ totalItems }}</h2>
+          <p class="card-text">Different products in inventory</p>
+        </div>
+        <div class="card-footer d-flex align-items-center justify-content-between">
+          <a routerLink="/items" class="text-white text-decoration-none">View Details</a>
+          <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+      <div class="card bg-success text-white h-100">
+        <div class="card-body">
+          <h5 class="card-title">Inventory Value</h5>
+          <h2 class="display-4">{{getCurrencySymbol()}}{{ totalValue | number:'1.2-2' }}</h2>
+          <p class="card-text">Total value of all items</p>
+        </div>
+        <div class="card-footer d-flex align-items-center justify-content-between">
+          <a routerLink="/reports" class="text-white text-decoration-none">View Reports</a>
+          <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+      <div class="card bg-info text-white h-100">
+        <div class="card-body">
+          <h5 class="card-title">Total Sales</h5>
+          <h2 class="display-4">{{getCurrencySymbol()}}{{ totalSales | number:'1.2-2' }}</h2>
+          <p class="card-text">Revenue from all sales</p>
+        </div>
+        <div class="card-footer d-flex align-items-center justify-content-between">
+          <a routerLink="/sales" class="text-white text-decoration-none">View Sales</a>
+          <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+      <div class="card bg-warning text-dark h-100">
+        <div class="card-body">
+          <h5 class="card-title">Low Stock Items</h5>
+          <h2 class="display-4">{{ lowStockItems.length }}</h2>
+          <p class="card-text">Items below reorder level</p>
+        </div>
+        <div class="card-footer d-flex align-items-center justify-content-between">
+          <a routerLink="/items/low-stock" class="text-dark text-decoration-none">View Low Stock</a>
+          <div class="small text-dark"><i class="fas fa-angle-right"></i></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Charts Row -->
+  <div class="row mb-4">
+    <div class="col-md-8 mb-4">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">Sales Last 7 Days</h5>
+        </div>
+        <div class="card-body">
+          <canvas baseChart
+            [data]="salesChartData"
+            [options]="barChartOptions"
+            [plugins]="barChartPlugins"
+            [type]="barChartType">
+          </canvas>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">Inventory by Category</h5>
+        </div>
+        <div class="card-body">
+          <canvas baseChart
+            [data]="categoryChartData"
+            [options]="pieChartOptions"
+            [type]="pieChartType">
+          </canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Recent Activity Row -->
+  <div class="row">
+    <div class="col-md-6 mb-4">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">Recent Sales</h5>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Customer</th>
+                  <th>Items</th>
+                  <th>Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let sale of recentSales">
+                  <td>{{ sale.date | date:'short' }}</td>
+                  <td>{{ sale.customerName }}</td>
+                  <td>{{ getTotal(sale) }}</td>
+                  <td>{{getCurrencySymbol()}}{{ sale.totalAmount | number:'1.2-2' }}</td>
+                </tr>
+                <tr *ngIf="recentSales.length === 0">
+                  <td colspan="4" class="text-center">No recent sales</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="text-end">
+            <a routerLink="/sales" class="btn btn-sm btn-primary">View All Sales</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">Low Stock Items</h5>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>SKU</th>
+                  <th>Quantity</th>
+                  <th>Reorder Level</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of lowStockItems.slice(0, 5)">
+                  <td>{{ item.name }}</td>
+                  <td>{{ item.sku }}</td>
+                  <td>
+                    <span [ngClass]="{'text-danger': item.quantity <= 0}">
+                      {{ item.quantity }}
+                    </span>
+                  </td>
+                  <td>{{ item.reorderLevel }}</td>
+                </tr>
+                <tr *ngIf="lowStockItems.length === 0">
+                  <td colspan="4" class="text-center">No low stock items</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="text-end">
+            <a routerLink="/items/low-stock" class="btn btn-sm btn-warning">View All Low Stock</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

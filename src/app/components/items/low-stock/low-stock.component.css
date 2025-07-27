@@ -1,0 +1,27 @@
+
+.card {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease-in-out;
+  
+  &:hover {
+    transform: translateY(-5px);
+  }
+}
+
+.card-header {
+  background-color: #f8f9fa;
+}
+
+.badge {
+  font-size: 0.85em;
+  padding: 0.5em 0.75em;
+}
+
+.progress {
+  height: 1.5rem;
+  font-weight: 600;
+}
+
+.progress-bar {
+  min-width: 2rem;
+}

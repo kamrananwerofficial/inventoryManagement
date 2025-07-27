@@ -1,0 +1,160 @@
+
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Transaction Ledger</h1>
+    <button class="btn btn-primary" (click)="exportToPdf()">
+      <i class="fas fa-file-pdf me-2"></i>Export to PDF
+    </button>
+  </div>
+  
+  <!-- Filters -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="card-title mb-0">Filters</h5>
+    </div>
+    <div class="card-body">
+      <form [formGroup]="filterForm">
+        <div class="row g-3">
+          <div class="col-md-3">
+            <label for="startDate" class="form-label">Start Date</label>
+            <input type="date" class="form-control" id="startDate" formControlName="startDate">
+          </div>
+          
+          <div class="col-md-3">
+            <label for="endDate" class="form-label">End Date</label>
+            <input type="date" class="form-control" id="endDate" formControlName="endDate">
+          </div>
+          
+          <div class="col-md-3">
+            <label for="transactionType" class="form-label">Transaction Type</label>
+            <select class="form-select" id="transactionType" formControlName="transactionType">
+              <option value="">All Types</option>
+              <option value="SALE">Sales</option>
+              <option value="PURCHASE">Purchases</option>
+              <option value="ADJUSTMENT">Adjustments</option>
+            </select>
+          </div>
+          
+          <div class="col-md-3">
+            <label for="itemName" class="form-label">Item Name</label>
+            <input type="text" class="form-control" id="itemName" formControlName="itemName">
+          </div>
+          
+          <div class="col-md-3">
+            <label for="reference" class="form-label">Reference</label>
+            <input type="text" class="form-control" id="reference" formControlName="reference">
+          </div>
+          
+          <div class="col-md-6 d-flex align-items-end">
+            <button type="button" class="btn btn-primary me-2" (click)="applyFilters()">
+              <i class="fas fa-filter me-2"></i>Apply Filters
+            </button>
+            <button type="button" class="btn btn-outline-secondary" (click)="resetFilters()">
+              <i class="fas fa-times me-2"></i>Reset
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Summary Cards -->
+  <div class="row mb-4">
+    <div class="col-md-3 mb-3">
+      <div class="card bg-info text-white h-100">
+        <div class="card-body">
+          <h5 class="card-title">Total Sales</h5>
+          <h2 class="display-6">${{ totalSales | number:'1.2-2' }}</h2>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+      <div class="card bg-success text-white h-100">
+        <div class="card-body">
+          <h5 class="card-title">Total Purchases</h5>
+          <h2 class="display-6">${{ totalPurchases | number:'1.2-2' }}</h2>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+      <div class="card bg-warning text-dark h-100">
+        <div class="card-body">
+          <h5 class="card-title">Adjustments</h5>
+          <h2 class="display-6">{{ totalAdjustments }}</h2>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+      <div class="card" [ngClass]="{'bg-danger text-white': netAmount < 0, 'bg-primary text-white': netAmount >= 0}">
+        <div class="card-body">
+          <h5 class="card-title">Net Amount</h5>
+          <h2 class="display-6">${{ netAmount | number:'1.2-2' }}</h2>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Transactions Table -->
+  <div class="card">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-striped table-hover">
+          <thead>
+            <tr>
+              <th (click)="onSort('date')" class="sortable">
+                Date <i class="fas" [ngClass]="getSortIcon('date')"></i>
+              </th>
+              <th (click)="onSort('type')" class="sortable">
+                Type <i class="fas" [ngClass]="getSortIcon('type')"></i>
+              </th>
+              <th (click)="onSort('itemName')" class="sortable">
+                Item <i class="fas" [ngClass]="getSortIcon('itemName')"></i>
+              </th>
+              <th>Quantity</th>
+              <th>Unit Price</th>
+              <th (click)="onSort('totalAmount')" class="sortable">
+                Total <i class="fas" [ngClass]="getSortIcon('totalAmount')"></i>
+              </th>
+              <th (click)="onSort('reference')" class="sortable">
+                Reference <i class="fas" [ngClass]="getSortIcon('reference')"></i>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let transaction of filteredTransactions">
+              <td>{{ transaction.date | date:'short' }}</td>
+              <td>
+                <span [ngClass]="getTransactionTypeClass(transaction.type)">
+                  {{ transaction.type }}
+                </span>
+              </td>
+              <td>{{ transaction.itemName }}</td>
+              <td [ngClass]="getTransactionTypeClass(transaction.type)">
+                {{ getTransactionQuantityPrefix(transaction.type) }}{{ transaction.quantity }}
+              </td>
+              <td>${{ transaction.unitPrice | number:'1.2-2' }}</td>
+              <td>${{ transaction.totalAmount | number:'1.2-2' }}</td>
+              <td>{{ transaction.reference }}</td>
+            </tr>
+            <tr *ngIf="filteredTransactions.length === 0">
+              <td colspan="7" class="text-center py-3">
+                <div class="alert alert-info mb-0">
+                  No transactions found. Please adjust your filters.
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <div class="d-flex justify-content-between align-items-center mt-3">
+        <div>
+          <span class="text-muted">Showing {{ filteredTransactions.length }} of {{ transactions.length }} transactions</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

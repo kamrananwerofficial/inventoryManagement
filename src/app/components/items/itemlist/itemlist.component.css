@@ -1,0 +1,28 @@
+
+.sortable {
+  cursor: pointer;
+  user-select: none;
+  
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+  
+  .fas {
+    margin-left: 5px;
+  }
+}
+
+.table {
+  vertical-align: middle;
+}
+
+.badge {
+  font-size: 0.85em;
+  padding: 0.5em 0.75em;
+}
+
+.btn-group {
+  .btn {
+    padding: 0.25rem 0.5rem;
+  }
+}

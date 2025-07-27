@@ -1,0 +1,7 @@
+
+<div class="notification-container">
+  <div *ngFor="let notification of notifications" class="notification alert alert-{{ notification.type }} alert-dismissible fade show" role="alert">
+    {{ notification.message }}
+    <button type="button" class="btn-close" (click)="removeNotification(notification)" aria-label="Close"></button>
+  </div>
+</div>

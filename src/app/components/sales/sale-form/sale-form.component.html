@@ -1,0 +1,154 @@
+
+<div class="container-fluid py-4">
+  <div class="card">
+    <div class="card-header">
+      <h2>New Sale</h2>
+    </div>
+    
+    <div class="card-body">
+      <form [formGroup]="saleForm" (ngSubmit)="onSubmit()">
+        <div class="row mb-4">
+          <div class="col-md-3">
+            <label for="date" class="form-label">Date*</label>
+            <input type="date" class="form-control" id="date" formControlName="date">
+          </div>
+          
+          <div class="col-md-3">
+            <label for="reference" class="form-label">Reference*</label>
+            <input type="text" class="form-control" id="reference" formControlName="reference">
+          </div>
+          
+          <div class="col-md-3">
+            <label for="customerName" class="form-label">Customer Name*</label>
+            <input type="text" class="form-control" id="customerName" formControlName="customerName">
+          </div>
+          
+          <div class="col-md-3">
+            <label for="paymentMethod" class="form-label">Payment Method*</label>
+            <select class="form-select" id="paymentMethod" formControlName="paymentMethod">
+              <option value="Cash">Cash</option>
+              <option value="Credit Card">Credit Card</option>
+              <option value="Debit Card">Debit Card</option>
+              <option value="Bank Transfer">Bank Transfer</option>
+              <option value="Check">Check</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="row mb-4">
+          <div class="col-md-12">
+            <label for="notes" class="form-label">Notes</label>
+            <textarea class="form-control" id="notes" rows="2" formControlName="notes"></textarea>
+          </div>
+        </div>
+        
+        <!-- Item Search -->
+        <div class="card mb-4">
+          <div class="card-header bg-light">
+            <h5 class="card-title mb-0">Add Items</h5>
+          </div>
+          <div class="card-body">
+            <div class="input-group mb-3">
+              <input type="text" class="form-control" placeholder="Search items by name, SKU or category..." 
+                    [(ngModel)]="searchTerm" [ngModelOptions]="{standalone: true}" (keyup)="filterItems()">
+              <button class="btn btn-outline-secondary" type="button" (click)="filterItems()">
+                <i class="fas fa-search"></i>
+              </button>
+            </div>
+            
+            <div class="search-results" *ngIf="searchTerm.trim()">
+              <div class="list-group">
+                <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                        *ngFor="let item of filteredItems" (click)="selectItem(item)">
+                  <div>
+                    <strong>{{ item.name }}</strong>
+                    <small class="d-block text-muted">SKU: {{ item.sku }} | Category: {{ item.category }}</small>
+                  </div>
+                  <div class="text-end">
+                    <span class="badge bg-primary rounded-pill">{{ item.quantity }} in stock</span>
+                    <span class="ms-2">${{ item.unitPrice | number:'1.2-2' }}</span>
+                  </div>
+                </button>
+                <div class="list-group-item text-center" *ngIf="filteredItems.length === 0">
+                  No items found matching "{{ searchTerm }}"
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Sale Items -->
+        <div class="card mb-4">
+          <div class="card-header bg-light">
+            <h5 class="card-title mb-0">Sale Items</h5>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th style="width: 40%">Item</th>
+                    <th style="width: 15%">Quantity</th>
+                    <th style="width: 20%">Unit Price</th>
+                    <th style="width: 20%">Total</th>
+                    <th style="width: 5%"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let item of saleItems.controls; let i = index" [formGroup]="getSaleItemFormGroup(i)">
+                    <td>
+                      <input type="hidden" formControlName="itemId">
+                      <input type="text" class="form-control-plaintext" formControlName="itemName" readonly>
+                    </td>
+                    <td>
+                      <input type="number" class="form-control" formControlName="quantity" min="1" (change)="checkInventory(i)">
+                      <div class="invalid-feedback d-block" *ngIf="item.get('quantity')?.errors?.['insufficientStock']">
+                        Insufficient stock
+                      </div>
+                    </td>
+                    <td>
+                      <div class="input-group">
+                        <span class="input-group-text">$</span>
+                        <input type="number" class="form-control" formControlName="unitPrice" step="0.01" min="0.01">
+                      </div>
+                    </td>
+                    <td>
+                      <div class="input-group">
+                        <span class="input-group-text">$</span>
+                        <input type="number" class="form-control-plaintext" formControlName="totalPrice" readonly>
+                      </div>
+                    </td>
+                    <td>
+                      <button type="button" class="btn btn-sm btn-danger" (click)="removeSaleItem(i)">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </td>
+                  </tr>
+                  <tr *ngIf="saleItems.length === 0">
+                    <td colspan="5" class="text-center py-3">
+                      No items added to this sale. Search and add items above.
+                    </td>
+                  </tr>
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="3" class="text-end fw-bold">Total:</td>
+                    <td colspan="2" class="fw-bold">${{ getTotalAmount() | number:'1.2-2' }}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        </div>
+        
+        <div class="d-flex justify-content-between">
+          <a routerLink="/sales" class="btn btn-secondary">Cancel</a>
+          <button type="submit" class="btn btn-primary" [disabled]="saleItems.length === 0">
+            <i class="fas fa-save me-2"></i>Create Sale
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

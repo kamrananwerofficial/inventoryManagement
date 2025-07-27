@@ -1,0 +1,36 @@
+
+.card {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+  background-color: #f8f9fa;
+}
+
+.search-results {
+  max-height: 300px;
+  overflow-y: auto;
+  margin-top: 10px;
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+}
+
+.list-group-item {
+  cursor: pointer;
+  
+  &:hover {
+    background-color: #f8f9fa;
+  }
+}
+
+.form-control-plaintext {
+  padding-left: 0.75rem;
+}
+
+input[type="number"] {
+  text-align: right;
+}
+
+.table {
+  vertical-align: middle;
+}

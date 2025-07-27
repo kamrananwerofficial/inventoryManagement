@@ -1,0 +1,164 @@
+
+<div class="container-fluid py-4">
+  <h1 class="mb-4">Reports</h1>
+  
+  <!-- Date Range Filter -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="card-title mb-0">Date Range</h5>
+    </div>
+    <div class="card-body">
+      <form [formGroup]="filterForm" class="row g-3">
+        <div class="col-md-4">
+          <label for="startDate" class="form-label">Start Date</label>
+          <input type="date" class="form-control" id="startDate" formControlName="startDate">
+        </div>
+        
+        <div class="col-md-4">
+          <label for="endDate" class="form-label">End Date</label>
+          <input type="date" class="form-control" id="endDate" formControlName="endDate">
+        </div>
+        
+        <div class="col-md-4 d-flex align-items-end">
+          <button type="button" class="btn btn-primary" (click)="applyDateFilter()">
+            <i class="fas fa-filter me-2"></i>Apply Filter
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Summary Cards -->
+  <div class="row mb-4">
+    <div class="col-md-3 mb-3">
+      <div class="card bg-primary text-white h-100">
+        <div class="card-body">
+          <h5 class="card-title">Total Sales</h5>
+          <h2 class="display-6">${{ getTotalSales() | number:'1.2-2' }}</h2>
+          <p class="card-text">{{ sales.length }} transactions</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+      <div class="card bg-success text-white h-100">
+        <div class="card-body">
+          <h5 class="card-title">Total Purchases</h5>
+          <h2 class="display-6">${{ getTotalPurchases() | number:'1.2-2' }}</h2>
+          <p class="card-text">{{ purchases.length }} transactions</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+      <div class="card bg-info text-white h-100">
+        <div class="card-body">
+          <h5 class="card-title">Inventory Value</h5>
+          <h2 class="display-6">${{ getTotalInventoryValue() | number:'1.2-2' }}</h2>
+          <p class="card-text">{{ getTotalInventoryItems() }} items in stock</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+      <div class="card bg-warning text-dark h-100">
+        <div class="card-body">
+          <h5 class="card-title">Low Stock Items</h5>
+          <h2 class="display-6">{{ lowStockItems.length }}</h2>
+          <p class="card-text">Items below reorder level</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Charts Row -->
+  <div class="row mb-4">
+    <div class="col-md-8 mb-4">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">Sales Trend</h5>
+        </div>
+        <div class="card-body">
+          <canvas baseChart
+            [data]="salesChartData"
+            [options]="barChartOptions"
+            [type]="barChartType">
+          </canvas>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">Inventory by Category</h5>
+        </div>
+        <div class="card-body">
+          <canvas baseChart
+            [data]="categoryChartData"
+            [options]="pieChartOptions"
+            [type]="pieChartType">
+          </canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Generate Reports Section -->
+  <div class="card">
+    <div class="card-header">
+      <h5 class="card-title mb-0">Generate Reports</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6 mb-4">
+          <div class="card h-100">
+            <div class="card-body">
+              <h5 class="card-title">Inventory Report</h5>
+              <p class="card-text">Generate a complete report of all inventory items, including quantities, values, and stock status.</p>
+              <button class="btn btn-primary" (click)="generateInventoryReport()">
+                <i class="fas fa-file-pdf me-2"></i>Generate Report
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-6 mb-4">
+          <div class="card h-100">
+            <div class="card-body">
+              <h5 class="card-title">Sales Report</h5>
+              <p class="card-text">Generate a report of all sales transactions within the selected date range.</p>
+              <button class="btn btn-primary" (click)="generateSalesReport()">
+                <i class="fas fa-file-pdf me-2"></i>Generate Report
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-6 mb-4">
+          <div class="card h-100">
+            <div class="card-body">
+              <h5 class="card-title">Purchase Report</h5>
+              <p class="card-text">Generate a report of all purchase transactions within the selected date range.</p>
+              <button class="btn btn-primary" (click)="generatePurchaseReport()">
+                <i class="fas fa-file-pdf me-2"></i>Generate Report
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-6 mb-4">
+          <div class="card h-100">
+            <div class="card-body">
+              <h5 class="card-title">Low Stock Report</h5>
+              <p class="card-text">Generate a report of all items that are below their reorder levels.</p>
+              <button class="btn btn-primary" (click)="generateLowStockReport()">
+                <i class="fas fa-file-pdf me-2"></i>Generate Report
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
