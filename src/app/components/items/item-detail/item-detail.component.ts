@@ -1,13 +1,13 @@
-
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ItemService } from '../../../services/item.service';
 import { TransactionService } from '../../../services/transaction.service';
 import { NotificationService } from '../../../services/notification.service';
 import { Item } from '../../../models/item.model';
-import { Transaction } from '../../../models/transaction.model';
+import { Transaction, TransactionType } from '../../../models/transaction.model';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-item-detail',
@@ -16,9 +16,11 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 })
 export class ItemDetailComponent implements OnInit {
   item: Item | null = null;
-  itemTransactions: Transaction[] = [];
+  itemTransactions: any[] = [];
   adjustmentForm: FormGroup;
-  
+  itemId: string | null = null;
+  isLoading: boolean = false; // loading state
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -33,25 +35,71 @@ export class ItemDetailComponent implements OnInit {
 
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => {
-      const itemId = params.get('id');
-      
-      if (itemId) {
-        this.item = this.itemService.getItemById(itemId) || null;
-        
-        if (this.item) {
-          // Load transactions for this item
-          this.transactionService.getTransactions().subscribe(transactions => {
-            this.itemTransactions = transactions
-              .filter(t => t.itemId === itemId)
-              .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-          });
-        } else {
-          this.notificationService.error('Item not found');
-          this.router.navigate(['/items']);
-        }
+      this.itemId = params.get('id');
+      if (!this.itemId) {
+        this.notificationService.error('Invalid item ID');
+        this.router.navigate(['/items']);
+        return;
       }
+
+      // Subscribe to item changes
+      this.isLoading = true; // Set loading state
+     this.itemService.getItemById(this.itemId).subscribe({
+  next: (item) => {
+    this.item = item;
+    this.loadItemTransactions();
+  },
+  error: () => {
+    this.notificationService.error('Item not found');
+    this.router.navigate(['/items']);
+  },
+  complete: () => {
+    this.isLoading = false; // Reset loading state
+  }
+});
     });
   }
+
+loadItemTransactions(): void {
+  if (!this.itemId) return;
+
+  // Step 1: Get sales and purchases parallelly
+  forkJoin([
+    this.transactionService.getTransactionsByDateRange(new Date(0), new Date(),TransactionType.SALE),
+    this.transactionService.getTransactionsByDateRange(new Date(0), new Date(),TransactionType.PURCHASE)
+  ]).subscribe(([sales, purchases]) => {
+    const salesTransactions = sales
+      .filter(s => s.itemId == this.itemId)
+      .map(sale => ({
+        itemId: sale.itemId,
+        quantity: sale.quantity,
+        date: new Date(sale.date),
+         unitPrice: sale.unitPrice,
+          totalAmount: sale.totalAmount,
+          reference: sale.reference,
+        type: 'Sale'
+      }));
+
+    const purchaseTransactions = purchases
+      .filter(p => p.itemId == this.itemId)
+      .map(purchase => {
+        return {
+          itemId: purchase.itemId,
+          quantity: purchase.quantity,
+          date: new Date(purchase.date),
+          unitPrice: purchase.unitPrice,
+          totalAmount: purchase.totalAmount,
+          reference: purchase.reference,
+          type: 'Purchase'
+        };
+      });
+
+    // Step 3: Merge and sort
+    this.itemTransactions = [...salesTransactions, ...purchaseTransactions]
+      .sort((a, b) => b.date.getTime() - a.date.getTime());
+  });
+}
+
 
   createAdjustmentForm(): FormGroup {
     return this.fb.group({
@@ -68,52 +116,32 @@ export class ItemDetailComponent implements OnInit {
     this.modalService.open(modal, { centered: true });
   }
 
-  submitAdjustment(): void {
-    if (this.adjustmentForm.invalid || !this.item) {
-      return;
-    }
-    
-    const formValues = this.adjustmentForm.value;
-    
-    // Create adjustment transaction
-    const success = this.transactionService.createAdjustment({
-      date: new Date(),
-      itemId: this.item.id,
-      itemName: this.item.name,
-      quantity: formValues.quantity,
-      unitPrice: this.item.unitPrice,
-      totalAmount: formValues.quantity * this.item.unitPrice,
-      reference: 'Manual Adjustment',
-      notes: formValues.notes
-    });
-    
-    if (success) {
+ submitAdjustment(): void {
+  if (this.adjustmentForm.invalid || !this.item) return;
+
+  const formValues = this.adjustmentForm.value;
+
+  const adjustment = {
+    itemId: this.item.id,
+    quantity: formValues.quantity,
+    notes: formValues.notes,
+    date: new Date()
+  };
+
+  this.transactionService.createAdjustment(adjustment).subscribe({
+    next: () => {
       this.notificationService.success('Inventory adjustment completed successfully');
       this.modalService.dismissAll();
-      
-      // Refresh item data
-      if (this.item) {
-        this.item = this.itemService.getItemById(this.item.id) || null;
-      }
-      
-      // Refresh transactions
-      this.transactionService.getTransactions().subscribe(transactions => {
-        if (this.item) {
-          this.itemTransactions = transactions
-            .filter(t => t.itemId === this.item?.id)
-            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        }
-      });
-    } else {
-      this.notificationService.error('Adjustment would result in negative inventory');
+      this.loadItemTransactions(); // Refresh data
+    },
+    error: (err) => {
+      this.notificationService.error(err?.error || 'Adjustment failed');
     }
-  }
+  });
+}
 
   getStockStatus(): { status: string; class: string } {
-    if (!this.item) {
-      return { status: 'Unknown', class: 'bg-secondary' };
-    }
-    
+    if (!this.item) return { status: 'Unknown', class: 'bg-secondary' };
     if (this.item.quantity <= 0) {
       return { status: 'Out of Stock', class: 'bg-danger' };
     } else if (this.item.quantity <= this.item.reorderLevel) {
@@ -125,11 +153,11 @@ export class ItemDetailComponent implements OnInit {
 
   getTransactionTypeClass(type: string): string {
     switch (type) {
-      case 'SALE':
+      case 'Sale':
         return 'text-danger';
-      case 'PURCHASE':
+      case 'Purchase':
         return 'text-success';
-      case 'ADJUSTMENT':
+      case 'Adjustment':
         return 'text-warning';
       default:
         return '';
@@ -138,11 +166,11 @@ export class ItemDetailComponent implements OnInit {
 
   getTransactionQuantityPrefix(type: string): string {
     switch (type) {
-      case 'SALE':
+      case 'Sale':
         return '-';
-      case 'PURCHASE':
+      case 'Purchase':
         return '+';
-      case 'ADJUSTMENT':
+      case 'Adjustment':
         return '';
       default:
         return '';

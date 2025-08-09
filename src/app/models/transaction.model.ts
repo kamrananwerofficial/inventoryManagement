@@ -1,8 +1,8 @@
 
 export enum TransactionType {
-  PURCHASE = 'PURCHASE',
-  SALE = 'SALE',
-  ADJUSTMENT = 'ADJUSTMENT'
+  SALE = 0,
+  PURCHASE = 1,
+  ADJUSTMENT = 2
 }
 
 export interface Transaction {
@@ -27,6 +27,7 @@ export interface Sale {
   paymentMethod: string;
   reference: string;
   notes: string;
+  quantity: any;
 }
 
 export interface SaleItem {

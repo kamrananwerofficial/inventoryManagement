@@ -6,11 +6,13 @@ import { RouterModule } from '@angular/router';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { NotificationComponent } from './notification/notification.component';
 import { HeaderComponent } from './header/header.component';
+import { LoaderDirective } from './loader.directive';
 
 @NgModule({
   declarations: [
     NotificationComponent,
-    HeaderComponent
+    HeaderComponent,
+    LoaderDirective
   ],
   imports: [
     CommonModule,
@@ -26,7 +28,8 @@ import { HeaderComponent } from './header/header.component';
     RouterModule,
     NgbModule,
     NotificationComponent,
-    HeaderComponent
+    HeaderComponent,
+    LoaderDirective
   ]
 })
 export class SharedModule { }

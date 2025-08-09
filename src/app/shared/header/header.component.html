@@ -1,7 +1,7 @@
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
   <div class="container-fluid">
-    <a class="navbar-brand" routerLink="/">
+    <a class="navbar-brand" routerLink="**/dashboard" routerLinkActive="active">
       <i class="fas fa-boxes me-2"></i>Inventory Manager
     </a>
     
@@ -18,6 +18,12 @@
           </a>
         </li>
         
+        <li *ngIf="adminOnly()" class="nav-item">
+          <a class="nav-link" routerLink="/companies" routerLinkActive="active">
+            <i class="fas fa-building me-1"></i>Companies
+          </a>
+        </li>
+
         <li class="nav-item">
           <a class="nav-link" routerLink="/items" routerLinkActive="active">
             <i class="fas fa-cubes me-1"></i>Items
@@ -53,6 +59,11 @@
         <a class="btn btn-warning me-2" routerLink="/items/low-stock" *ngIf="lowStockCount > 0">
           <i class="fas fa-exclamation-triangle me-1"></i>
           Low Stock ({{ lowStockCount }})
+        </a>
+      </div>
+      <div class="d-flex mt-2 mt-lg-0">
+        <a class="btn btn-danger me-2" routerLink="/login">
+          <i class="fas fa-sign-out-alt"></i> Logout
         </a>
       </div>
     </div>

@@ -89,11 +89,17 @@
                 </div>
               </td>
             </tr>
-            <tr *ngIf="filteredItems.length === 0">
+            <tr *ngIf="filteredItems.length === 0 && !isLoading">
               <td colspan="7" class="text-center py-3">
                 <div class="alert alert-info mb-0">
                   No items found. Please add new items or adjust your search filters.
                 </div>
+              </td>
+            </tr>
+            <tr *ngIf="(!filteredItems || filteredItems.length === 0) && isLoading">
+              <td colspan="7" class="text-center py-3">
+                <div  style="min-height: 80px;" [appLoader]="isLoading" loaderText="Please wait...">
+                  </div>
               </td>
             </tr>
           </tbody>

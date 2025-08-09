@@ -4,14 +4,15 @@
 
 export const environment = {
   production: false,
+  apiUrl: 'http://localhost:5000/api', // 🟡 like: http://localhost:5000/api
   firebase: {
-   apiKey: "AIzaSyAmUagsLYOfHBCR9mxID3k8IxsgQNiUh6U",
-  authDomain: "inventorymanagementsoft.firebaseapp.com",
-  projectId: "inventorymanagementsoft",
-  storageBucket: "inventorymanagementsoft.firebasestorage.app",
-  messagingSenderId: "1007899983499",
-  appId: "1:1007899983499:web:d7e4b90b6df559d6f19e8e",
-  measurementId: "G-BJ630Q2Q3Z"
+    apiKey: "AIzaSyAmUagsLYOfHBCR9mxID3k8IxsgQNiUh6U",
+    authDomain: "inventorymanagementsoft.firebaseapp.com",
+    projectId: "inventorymanagementsoft",
+    storageBucket: "inventorymanagementsoft.appspot.com",
+    messagingSenderId: "1007899983499",
+    appId: "1:1007899983499:web:d7e4b90b6df559d6f19e8e",
+    measurementId: "G-BJ630Q2Q3Z"
   }
 };
 

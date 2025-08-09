@@ -1,4 +1,6 @@
 
+<div *ngIf="sale === null"  style="min-height: 200px;" [appLoader]="isLoading" loaderText="Please wait...">
+</div>
 <div class="container-fluid py-4" *ngIf="sale">
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h1>Sale Details</h1>
@@ -93,15 +95,5 @@
         </div>
       </div>
     </div>
-  </div>
-</div>
-
-<!-- Not Found Message -->
-<div class="container-fluid py-4" *ngIf="!sale">
-  <div class="alert alert-danger">
-    <h4 class="alert-heading">Sale Not Found</h4>
-    <p>The requested sale could not be found. It may have been deleted or the ID is invalid.</p>
-    <hr>
-    <a routerLink="/sales" class="btn btn-outline-danger">Return to Sales List</a>
   </div>
 </div>

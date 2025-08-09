@@ -18,7 +18,7 @@ export class ItemlistComponent implements OnInit {
   categories: string[] = [];
   sortField = 'name';
   sortDirection = 'asc';
-  
+  isLoading:boolean = false; // loading state
   itemToDelete: Item | null = null;
 
   constructor(
@@ -32,9 +32,11 @@ export class ItemlistComponent implements OnInit {
   }
 
   loadItems(): void {
+    this.isLoading = true; // Set loading state
     this.itemService.getItems().subscribe(items => {
       this.items = items;
       this.filterItems();
+      this.isLoading = false; // Reset loading state
       
       // Extract unique categories
       this.categories = Array.from(new Set(items.map(item => item.category)));
@@ -114,12 +116,19 @@ export class ItemlistComponent implements OnInit {
     this.modalService.open(modal, { centered: true });
   }
 
-  deleteItem(): void {
+   deleteItem(){
     if (this.itemToDelete) {
-      this.itemService.deleteItem(this.itemToDelete.id);
-      this.notificationService.success(`Item "${this.itemToDelete.name}" deleted successfully`);
-      this.modalService.dismissAll();
-      this.itemToDelete = null;
+      this.itemService.deleteItem(this.itemToDelete.id).subscribe({
+        next: () => {
+          this.notificationService.success(`Item "${this.itemToDelete?.name}" deleted successfully`);
+          this.modalService.dismissAll();
+          this.itemToDelete = null;
+  },
+  error: (error) => {
+    console.error('Delete failed:', error);
+    // Show error message if needed
+  }
+});
     }
   }
 

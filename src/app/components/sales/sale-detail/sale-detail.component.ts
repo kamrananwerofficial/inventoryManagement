@@ -5,6 +5,8 @@ import { TransactionService } from '../../../services/transaction.service';
 import { NotificationService } from '../../../services/notification.service';
 import { ReportService } from '../../../services/report.service';
 import { Sale } from '../../../models/transaction.model';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 @Component({
   selector: 'app-sale-detail',
@@ -13,6 +15,7 @@ import { Sale } from '../../../models/transaction.model';
 })
 export class SaleDetailComponent implements OnInit {
   sale: Sale | null = null;
+  isLoading: boolean = false; // loading state
   
   constructor(
     private route: ActivatedRoute,
@@ -25,15 +28,17 @@ export class SaleDetailComponent implements OnInit {
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => {
       const saleId = params.get('id');
-      
       if (saleId) {
-        this.sale = this.transactionService.getSaleById(saleId) || null;
-        
-        if (!this.sale) {
+        this.isLoading = true; // Set loading state
+        this.transactionService.getSaleById(saleId).subscribe((sale) => {
+          this.sale = sale || null;
+          this.isLoading = false; // Reset loading state
+          if (!this.sale) {
           this.notificationService.error('Sale not found');
           this.router.navigate(['/sales']);
         }
-      }
+      })
+  }
     });
   }
 
@@ -46,7 +51,7 @@ export class SaleDetailComponent implements OnInit {
     if (!this.sale) return;
     
     // Create a PDF invoice
-    const doc = new (window as any).jsPDF();
+     const doc = new jsPDF();
     
     // Add title
     doc.setFontSize(20);
@@ -72,8 +77,8 @@ export class SaleDetailComponent implements OnInit {
       ];
       tableRows.push(itemData);
     });
-    
-    (doc as any).autoTable({
+
+    autoTable(doc, {
       head: [tableColumn],
       body: tableRows,
       startY: 65,

@@ -151,9 +151,16 @@ export class PurchaseFormComponent implements OnInit {
     };
     
     // Submit purchase
-    this.transactionService.createPurchase(purchaseData);
-    this.notificationService.success('Purchase created successfully');
-    this.router.navigate(['/purchases']);
+        this.transactionService.createPurchase(purchaseData).subscribe({
+      next: res => {
+        this.notificationService.success(res?.message || 'Purchase created successfully');
+        this.router.navigate(['/purchases']);
+      },
+      error: err => {
+        console.error(err);
+        this.notificationService.error('Failed to create Purchase. Please try again.');
+      }
+    });
   }
 
   getTotalAmount(): number {

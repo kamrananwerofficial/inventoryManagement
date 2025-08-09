@@ -1,4 +1,6 @@
 
+<div *ngIf="purchase === null"  style="min-height: 200px;" [appLoader]="isLoading" loaderText="Please wait...">
+</div>
 <div class="container-fluid py-4" *ngIf="purchase">
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h1>Purchase Details</h1>
@@ -89,15 +91,5 @@
         </div>
       </div>
     </div>
-  </div>
-</div>
-
-<!-- Not Found Message -->
-<div class="container-fluid py-4" *ngIf="!purchase">
-  <div class="alert alert-danger">
-    <h4 class="alert-heading">Purchase Not Found</h4>
-    <p>The requested purchase could not be found. It may have been deleted or the ID is invalid.</p>
-    <hr>
-    <a routerLink="/purchases" class="btn btn-outline-danger">Return to Purchases List</a>
   </div>
 </div>

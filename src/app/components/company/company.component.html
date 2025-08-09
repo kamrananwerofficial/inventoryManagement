@@ -1,0 +1,74 @@
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Companies</h2>
+    <button class="btn btn-primary" (click)="openModal()">Add Company</button>
+  </div>
+
+  <!-- Company List -->
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Owner</th>
+        <th>Phone</th>
+        <th>Address</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let company of companies">
+        <td>{{ company.name }}</td>
+        <td>{{ company.ownerName }}</td>
+        <td>{{ company.phoneNo }}</td>
+        <td>{{ company.address }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Modal -->
+  <div class="modal fade" id="companyModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <form [formGroup]="companyForm" (ngSubmit)="submitForm()">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Add Company</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Name</label>
+                <input class="form-control" formControlName="name" />
+                <div class="text-danger" *ngIf="companyForm.get('name')?.invalid && companyForm.get('name')?.touched">
+                  Name is required
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Owner Name</label>
+                <input class="form-control" formControlName="ownerName" />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Phone No</label>
+                <input type="number" class="form-control" formControlName="phoneNo" />
+                <div class="text-danger" *ngIf="companyForm.get('phoneNo')?.invalid && companyForm.get('phoneNo')?.touched">
+                  Valid phone no required
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Address</label>
+                <input class="form-control" formControlName="address" />
+              </div>
+              <div class="col-md-12">
+                <label class="form-label">Description</label>
+                <textarea class="form-control" formControlName="description"></textarea>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" [disabled]="companyForm.invalid" class="btn btn-success">Save</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

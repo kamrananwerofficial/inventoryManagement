@@ -1,10 +1,9 @@
-
 <div class="container-fluid py-4">
   <h1 class="mb-4">Dashboard</h1>
   
   <!-- Summary Cards -->
   <div class="row mb-4">
-    <div class="col-md-3 mb-3">
+    <div class="col-md-4 mb-3">
       <div class="card bg-primary text-white h-100">
         <div class="card-body">
           <h5 class="card-title">Total Items</h5>
@@ -17,8 +16,8 @@
         </div>
       </div>
     </div>
-    
-    <div class="col-md-3 mb-3">
+
+    <div class="col-md-4 mb-3">
       <div class="card bg-success text-white h-100">
         <div class="card-body">
           <h5 class="card-title">Inventory Value</h5>
@@ -31,8 +30,8 @@
         </div>
       </div>
     </div>
-    
-    <div class="col-md-3 mb-3">
+
+    <div class="col-md-4 mb-3">
       <div class="card bg-info text-white h-100">
         <div class="card-body">
           <h5 class="card-title">Total Sales</h5>
@@ -45,22 +44,8 @@
         </div>
       </div>
     </div>
-    
-    <div class="col-md-3 mb-3">
-      <div class="card bg-warning text-dark h-100">
-        <div class="card-body">
-          <h5 class="card-title">Low Stock Items</h5>
-          <h2 class="display-4">{{ lowStockItems.length }}</h2>
-          <p class="card-text">Items below reorder level</p>
-        </div>
-        <div class="card-footer d-flex align-items-center justify-content-between">
-          <a routerLink="/items/low-stock" class="text-dark text-decoration-none">View Low Stock</a>
-          <div class="small text-dark"><i class="fas fa-angle-right"></i></div>
-        </div>
-      </div>
-    </div>
   </div>
-  
+
   <!-- Charts Row -->
   <div class="row mb-4">
     <div class="col-md-8 mb-4">
@@ -68,7 +53,7 @@
         <div class="card-header">
           <h5 class="card-title mb-0">Sales Last 7 Days</h5>
         </div>
-        <div class="card-body">
+        <div *ngIf="isShowBarChart" class="card-body">
           <canvas baseChart
             [data]="salesChartData"
             [options]="barChartOptions"
@@ -78,8 +63,8 @@
         </div>
       </div>
     </div>
-    
-    <div class="col-md-4 mb-4">
+
+    <div *ngIf="isShowPieChart" class="col-md-4 mb-4">
       <div class="card">
         <div class="card-header">
           <h5 class="card-title mb-0">Inventory by Category</h5>
@@ -94,8 +79,8 @@
       </div>
     </div>
   </div>
-  
-  <!-- Recent Activity Row -->
+
+  <!-- Recent Sales Table -->
   <div class="row">
     <div class="col-md-6 mb-4">
       <div class="card">
@@ -126,7 +111,7 @@
               </tbody>
             </table>
           </div>
-          <div class="text-end">
+          <div class="text-end mt-2">
             <a routerLink="/sales" class="btn btn-sm btn-primary">View All Sales</a>
           </div>
         </div>
@@ -166,7 +151,7 @@
               </tbody>
             </table>
           </div>
-          <div class="text-end">
+          <div class="text-end mt-2">
             <a routerLink="/items/low-stock" class="btn btn-sm btn-warning">View All Low Stock</a>
           </div>
         </div>

@@ -5,7 +5,8 @@ import { TransactionService } from '../../../services/transaction.service';
 import { NotificationService } from '../../../services/notification.service';
 import { ReportService } from '../../../services/report.service';
 import { Purchase } from '../../../models/transaction.model';
-
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 @Component({
   selector: 'app-purchase-detail',
   templateUrl: './purchase-detail.component.html',
@@ -13,6 +14,7 @@ import { Purchase } from '../../../models/transaction.model';
 })
 export class PurchaseDetailComponent implements OnInit {
   purchase: Purchase | null = null;
+  isLoading: boolean = false; // loading state
   
   constructor(
     private route: ActivatedRoute,
@@ -27,14 +29,17 @@ export class PurchaseDetailComponent implements OnInit {
       const purchaseId = params.get('id');
       
       if (purchaseId) {
-        this.purchase = this.transactionService.getPurchaseById(purchaseId) || null;
-        
-        if (!this.purchase) {
+        this.isLoading = true; // Set loading state
+        this.transactionService.getPurchaseById(purchaseId).subscribe((purchase) => {
+          this.purchase = purchase || null;
+          this.isLoading = false; // Reset loading state
+          if (!this.purchase) {
           this.notificationService.error('Purchase not found');
           this.router.navigate(['/purchases']);
         }
-      }
-    });
+      })
+  }
+})
   }
 
   getTotalItems(): number {
@@ -46,7 +51,7 @@ export class PurchaseDetailComponent implements OnInit {
     if (!this.purchase) return;
     
     // Create a PDF purchase order
-    const doc = new (window as any).jsPDF();
+    const doc = new jsPDF();
     
     // Add title
     doc.setFontSize(20);
@@ -71,8 +76,8 @@ export class PurchaseDetailComponent implements OnInit {
       ];
       tableRows.push(itemData);
     });
-    
-    (doc as any).autoTable({
+
+    autoTable(doc, {
       head: [tableColumn],
       body: tableRows,
       startY: 60,

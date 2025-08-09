@@ -1,4 +1,6 @@
 
+<div *ngIf="item === null"  style="min-height: 200px;" [appLoader]="isLoading" loaderText="Please wait...">
+</div>
 <div class="container-fluid py-4" *ngIf="item">
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h1>{{ item.name }}</h1>
@@ -165,12 +167,3 @@
   </div>
 </ng-template>
 
-<!-- Not Found Message -->
-<div class="container-fluid py-4" *ngIf="!item">
-  <div class="alert alert-danger">
-    <h4 class="alert-heading">Item Not Found</h4>
-    <p>The requested item could not be found. It may have been deleted or the ID is invalid.</p>
-    <hr>
-    <a routerLink="/items" class="btn btn-outline-danger">Return to Items List</a>
-  </div>
-</div>

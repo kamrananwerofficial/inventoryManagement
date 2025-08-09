@@ -20,7 +20,7 @@
         </div>
         
         <div class="col-md-4 d-flex align-items-end">
-          <button type="button" class="btn btn-primary" (click)="applyDateFilter()">
+          <button type="button" class="btn btn-primary" (click)="loadData()">
             <i class="fas fa-filter me-2"></i>Apply Filter
           </button>
         </div>
@@ -78,7 +78,7 @@
         <div class="card-header">
           <h5 class="card-title mb-0">Sales Trend</h5>
         </div>
-        <div class="card-body">
+        <div *ngIf="isChartVisible" class="card-body">
           <canvas baseChart
             [data]="salesChartData"
             [options]="barChartOptions"
@@ -93,7 +93,7 @@
         <div class="card-header">
           <h5 class="card-title mb-0">Inventory by Category</h5>
         </div>
-        <div class="card-body">
+        <div *ngIf="isShowCategoryChart" class="card-body">
           <canvas baseChart
             [data]="categoryChartData"
             [options]="pieChartOptions"

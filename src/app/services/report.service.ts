@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Item } from '../models/item.model';
-import { Transaction, Sale, Purchase } from '../models/transaction.model';
+import { Transaction, Sale, Purchase, TransactionType } from '../models/transaction.model';
 
 @Injectable({
   providedIn: 'root'
@@ -71,7 +71,7 @@ export class ReportService {
         new Date(sale.date).toLocaleDateString(),
         sale.reference,
         sale.customerName,
-        sale.items.reduce((sum, item) => sum + item.quantity, 0).toString(),
+        sale.quantity.toString(),
         `$${sale.totalAmount.toFixed(2)}`
       ]),
       startY: 46,
@@ -83,7 +83,7 @@ export class ReportService {
     const totalSales = sales.length;
     const totalRevenue = sales.reduce((sum, sale) => sum + sale.totalAmount, 0);
     const totalItems = sales.reduce((sum, sale) => 
-      sum + sale.items.reduce((itemSum, item) => itemSum + item.quantity, 0), 0);
+      sum + (sale.quantity || 0), 0)
     
     const finalY = (doc as any).lastAutoTable.finalY + 10;
     doc.text(`Total Sales: ${totalSales}`, 14, finalY);
@@ -114,7 +114,7 @@ export class ReportService {
         purchase.reference,
         purchase.supplierName,
         purchase.items.reduce((sum, item) => sum + item.quantity, 0).toString(),
-        `$${purchase.totalAmount.toFixed(2)}`
+      `$${purchase.totalAmount.toFixed(2)}`
       ]),
       startY: 46,
       styles: { fontSize: 10 },
@@ -124,9 +124,8 @@ export class ReportService {
     // Add summary
     const totalPurchases = purchases.length;
     const totalCost = purchases.reduce((sum, purchase) => sum + purchase.totalAmount, 0);
-    const totalItems = purchases.reduce((sum, purchase) => 
+    const totalItems =  purchases.reduce((sum, purchase) => 
       sum + purchase.items.reduce((itemSum, item) => itemSum + item.quantity, 0), 0);
-    
     const finalY = (doc as any).lastAutoTable.finalY + 10;
     doc.text(`Total Purchases: ${totalPurchases}`, 14, finalY);
     doc.text(`Total Items Purchased: ${totalItems}`, 14, finalY + 7);
@@ -166,10 +165,10 @@ export class ReportService {
     });
     
     // Add summary
-    const sales = transactions.filter(t => t.type === 'SALE');
-    const purchases = transactions.filter(t => t.type === 'PURCHASE');
-    const adjustments = transactions.filter(t => t.type === 'ADJUSTMENT');
-    
+    const sales = transactions.filter(t => t.type === TransactionType.SALE);
+    const purchases = transactions.filter(t => t.type === TransactionType.PURCHASE);
+    const adjustments = transactions.filter(t => t.type === TransactionType.ADJUSTMENT);
+
     const totalSales = sales.reduce((sum, t) => sum + t.totalAmount, 0);
     const totalPurchases = purchases.reduce((sum, t) => sum + t.totalAmount, 0);
     

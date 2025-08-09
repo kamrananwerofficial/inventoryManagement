@@ -46,7 +46,7 @@
           </div>
           
           <div class="col-md-6 d-flex align-items-end">
-            <button type="button" class="btn btn-primary me-2" (click)="applyFilters()">
+            <button type="button" class="btn btn-primary me-2" (click)="loadItemTransactions()">
               <i class="fas fa-filter me-2"></i>Apply Filters
             </button>
             <button type="button" class="btn btn-outline-secondary" (click)="resetFilters()">
@@ -128,7 +128,7 @@
               <td>{{ transaction.date | date:'short' }}</td>
               <td>
                 <span [ngClass]="getTransactionTypeClass(transaction.type)">
-                  {{ transaction.type }}
+                  {{ getTransactionType(transaction.type) }}
                 </span>
               </td>
               <td>{{ transaction.itemName }}</td>

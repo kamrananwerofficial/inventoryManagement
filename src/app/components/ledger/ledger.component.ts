@@ -1,6 +1,7 @@
 
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 import { Transaction, TransactionType } from 'src/app/models/transaction.model';
 import { NotificationService } from 'src/app/services/notification.service';
 import { ReportService } from 'src/app/services/report.service';
@@ -12,7 +13,7 @@ import { TransactionService } from 'src/app/services/transaction.service';
   styleUrls: ['./ledger.component.css']
 })
 export class LedgerComponent implements OnInit {
-  transactions: Transaction[] = [];
+  transactions: any[] = [];
   filteredTransactions: Transaction[] = [];
   filterForm: FormGroup;
   
@@ -35,7 +36,7 @@ export class LedgerComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.loadTransactions();
+    this.loadItemTransactions();
   }
 
   createFilterForm(): FormGroup {
@@ -47,13 +48,32 @@ export class LedgerComponent implements OnInit {
       reference: ['']
     });
   }
-
-  loadTransactions(): void {
-    this.transactionService.getTransactions().subscribe(transactions => {
-      this.transactions = transactions;
-      this.applyFilters();
-    });
+  getTransactionType(type: TransactionType): string {
+    switch (type) {
+      case TransactionType.SALE:
+        return 'Sale';
+      case TransactionType.PURCHASE:
+        return 'Purchase';
+      case TransactionType.ADJUSTMENT:
+        return 'Adjustment';
+      default:
+        return 'Unknown';
+    }
   }
+loadItemTransactions(): void {
+  // Step 1: Get sales and purchases parallelly
+  forkJoin([
+    this.transactionService.getTransactionsByDateRange(new Date(0), new Date(), TransactionType.SALE),
+    this.transactionService.getTransactionsByDateRange(new Date(0), new Date(), TransactionType.PURCHASE),
+    this.transactionService.getTransactionsByDateRange(new Date(0), new Date(), TransactionType.ADJUSTMENT)
+  ]).subscribe(([sales, purchases, adjustments]) => {
+    this.transactions = [...sales, ...purchases, ...adjustments]
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    this.applyFilters();
+  }, error => {
+    this.notificationService.error('Failed to load transactions');
+  });
+}
 
   applyFilters(): void {
     const filters = this.filterForm.value;
@@ -147,24 +167,18 @@ export class LedgerComponent implements OnInit {
   }
 
   calculateSummary(): void {
-    this.totalSales = this.filteredTransactions
-      .filter(t => t.type === TransactionType.SALE)
-      .reduce((sum, t) => sum + t.totalAmount, 0);
-      
-    this.totalPurchases = this.filteredTransactions
-      .filter(t => t.type === TransactionType.PURCHASE)
-      .reduce((sum, t) => sum + t.totalAmount, 0);
-      
-    const adjustments = this.filteredTransactions
-      .filter(t => t.type === TransactionType.ADJUSTMENT);
-      
-    this.totalAdjustments = adjustments.length;
+    this.totalSales = this.filteredTransactions.filter(t=> t.type == TransactionType.SALE).reduce((sum, t) => sum + t.totalAmount, 0);
+
+    this.totalPurchases = this.filteredTransactions.filter(t=> t.type == TransactionType.PURCHASE).reduce((sum, t) => sum + t.totalAmount, 0);
+
+    this.totalAdjustments = this.filteredTransactions.filter(t=> t.type == TransactionType.ADJUSTMENT)?.length;
+
     
     // Net amount is sales minus purchases
     this.netAmount = this.totalSales - this.totalPurchases;
   }
 
-  getTransactionTypeClass(type: string): string {
+  getTransactionTypeClass(type: any): string {
     switch (type) {
       case TransactionType.SALE:
         return 'text-danger';
@@ -177,7 +191,7 @@ export class LedgerComponent implements OnInit {
     }
   }
 
-  getTransactionQuantityPrefix(type: string): string {
+  getTransactionQuantityPrefix(type: any): string {
     switch (type) {
       case TransactionType.SALE:
         return '-';

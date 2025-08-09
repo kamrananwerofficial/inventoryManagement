@@ -1,12 +1,14 @@
-
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+
 import { ItemService } from '../../../services/item.service';
 import { TransactionService } from '../../../services/transaction.service';
 import { NotificationService } from '../../../services/notification.service';
+
 import { Item } from '../../../models/item.model';
 import { SaleItem } from '../../../models/transaction.model';
+
 
 @Component({
   selector: 'app-sale-form',
@@ -17,8 +19,13 @@ export class SaleFormComponent implements OnInit {
   saleForm: FormGroup;
   items: Item[] = [];
   filteredItems: Item[] = [];
-  searchTerm = '';
-  
+  searchTerm: string = '';
+
+  paymentMethods = { Cash: 'Cash',
+  Credit: 'Credit',
+  Bank: 'Bank' } as const;
+  PaymentMethod = this.paymentMethods;
+
   constructor(
     private fb: FormBuilder,
     private itemService: ItemService,
@@ -26,46 +33,53 @@ export class SaleFormComponent implements OnInit {
     private notificationService: NotificationService,
     private router: Router
   ) {
-    this.saleForm = this.createSaleForm();
+    this.saleForm = this.initForm();
   }
 
   ngOnInit(): void {
     this.loadItems();
   }
 
-  createSaleForm(): FormGroup {
+  private initForm(): FormGroup {
     return this.fb.group({
-      date: [new Date().toISOString().split('T')[0], Validators.required],
+      date: [this.getTodayDate(), Validators.required],
       customerName: ['', Validators.required],
-      paymentMethod: ['Cash', Validators.required],
-      reference: [`INV-${Date.now().toString().substring(6)}`, Validators.required],
+      paymentMethod: [this.PaymentMethod.Cash, Validators.required],
+      reference: [this.generateInvoiceReference(), Validators.required],
       notes: [''],
       items: this.fb.array([])
     });
   }
 
+  private getTodayDate(): string {
+    return new Date().toISOString().split('T')[0];
+  }
+
+  private generateInvoiceReference(): string {
+    return `INV-${Date.now().toString().substring(6)}`;
+  }
+
   get saleItems(): FormArray {
     return this.saleForm.get('items') as FormArray;
   }
-  
+
   getSaleItemFormGroup(index: number): FormGroup {
     return this.saleItems.at(index) as FormGroup;
   }
 
   addSaleItem(item?: Item): void {
-    const saleItem = this.fb.group({
-      itemId: [item ? item.id : '', Validators.required],
-      itemName: [item ? item.name : '', Validators.required],
+    const group = this.fb.group({
+      itemId: [item?.id || '', Validators.required],
+      itemName: [item?.name || '', Validators.required],
       quantity: [1, [Validators.required, Validators.min(1)]],
-      unitPrice: [item ? item.unitPrice : 0, [Validators.required, Validators.min(0.01)]],
-      totalPrice: [item ? item.unitPrice : 0]
+      unitPrice: [item?.unitPrice ?? 0, [Validators.required, Validators.min(0.01)]],
+      totalPrice: [item?.unitPrice ?? 0]
     });
-    
-    // Update total price when quantity or unit price changes
-    saleItem.get('quantity')?.valueChanges.subscribe(() => this.updateItemTotal(saleItem));
-    saleItem.get('unitPrice')?.valueChanges.subscribe(() => this.updateItemTotal(saleItem));
-    
-    this.saleItems.push(saleItem);
+
+    group.get('quantity')?.valueChanges.subscribe(() => this.updateItemTotal(group));
+    group.get('unitPrice')?.valueChanges.subscribe(() => this.updateItemTotal(group));
+
+    this.saleItems.push(group);
     this.updateTotals();
   }
 
@@ -74,39 +88,34 @@ export class SaleFormComponent implements OnInit {
     this.updateTotals();
   }
 
-  updateItemTotal(saleItem: FormGroup): void {
-    const quantity = saleItem.get('quantity')?.value || 0;
-    const unitPrice = saleItem.get('unitPrice')?.value || 0;
-    const totalPrice = quantity * unitPrice;
-    
-    saleItem.patchValue({ totalPrice });
+  updateItemTotal(group: FormGroup): void {
+    const quantity = group.get('quantity')?.value || 0;
+    const unitPrice = group.get('unitPrice')?.value || 0;
+    group.patchValue({ totalPrice: quantity * unitPrice }, { emitEvent: false });
+
     this.updateTotals();
   }
 
   updateTotals(): void {
-    // This method is called whenever items change to update the total
-    // The total is calculated in the template
+    // This is calculated dynamically in getTotalAmount()
   }
 
   loadItems(): void {
     this.itemService.getItems().subscribe(items => {
-      this.items = items.filter(item => item.quantity > 0); // Only show items in stock
+      this.items = items.filter(item => item.quantity > 0);
       this.filteredItems = [...this.items];
     });
   }
 
   filterItems(): void {
-    if (!this.searchTerm.trim()) {
-      this.filteredItems = [...this.items];
-      return;
-    }
-    
     const search = this.searchTerm.toLowerCase().trim();
-    this.filteredItems = this.items.filter(item => 
-      item.name.toLowerCase().includes(search) || 
-      item.sku.toLowerCase().includes(search) ||
-      item.category.toLowerCase().includes(search)
-    );
+    this.filteredItems = !search
+      ? [...this.items]
+      : this.items.filter(item =>
+          item.name.toLowerCase().includes(search) ||
+          item.sku.toLowerCase().includes(search) ||
+          item.category.toLowerCase().includes(search)
+        );
   }
 
   selectItem(item: Item): void {
@@ -120,77 +129,64 @@ export class SaleFormComponent implements OnInit {
   }
 
   checkInventory(index: number): boolean {
-    const saleItem = this.saleItems.at(index) as FormGroup;
-    const itemId = saleItem.get('itemId')?.value;
-    const requestedQuantity = saleItem.get('quantity')?.value || 0;
-    
+    const group = this.saleItems.at(index) as FormGroup;
+    const itemId = group.get('itemId')?.value;
+    const requestedQty = group.get('quantity')?.value;
+
     const item = this.getItemById(itemId);
     if (!item) return false;
-    
-    // Check if requested quantity exceeds available stock
-    if (requestedQuantity > item.quantity) {
-      saleItem.get('quantity')?.setErrors({ 'insufficientStock': true });
+
+    if (requestedQty > item.quantity) {
+      group.get('quantity')?.setErrors({ insufficientStock: true });
       return false;
     }
-    
-    saleItem.get('quantity')?.setErrors(null);
+
+    group.get('quantity')?.setErrors(null);
+    return true;
+  }
+
+  validateForm(): boolean {
+    if (this.saleForm.invalid) {
+      this.saleForm.markAllAsTouched();
+      this.saleItems.controls.forEach(control => control.markAllAsTouched());
+      this.notificationService.warning('Please fix the form errors before submitting');
+      return false;
+    }
+
+    let inventoryValid = true;
+    for (let i = 0; i < this.saleItems.length; i++) {
+      if (!this.checkInventory(i)) inventoryValid = false;
+    }
+
+    if (!inventoryValid) {
+      this.notificationService.error('Some items have insufficient stock');
+      return false;
+    }
+
     return true;
   }
 
   onSubmit(): void {
-    if (this.saleForm.invalid) {
-      // Mark all fields as touched to trigger validation messages
-      Object.keys(this.saleForm.controls).forEach(key => {
-        const control = this.saleForm.get(key);
-        control?.markAsTouched();
-      });
-      
-      // Mark all item fields as touched
-      this.saleItems.controls.forEach(control => {
-        Object.keys(control.value).forEach(key => {
-          const field = control.get(key);
-          field?.markAsTouched();
-        });
-      });
-      
-      this.notificationService.warning('Please fix the form errors before submitting');
-      return;
-    }
-    
-    // Check inventory for all items
-    let inventoryValid = true;
-    for (let i = 0; i < this.saleItems.length; i++) {
-      if (!this.checkInventory(i)) {
-        inventoryValid = false;
-      }
-    }
-    
-    if (!inventoryValid) {
-      this.notificationService.error('Some items have insufficient stock');
-      return;
-    }
-    
-    // Calculate total amount
-    const totalAmount = this.saleItems.controls.reduce((sum, control) => {
-      return sum + (control.get('totalPrice')?.value || 0);
-    }, 0);
-    
-    // Create sale object
+    if (!this.validateForm()) return;
+
+    const totalAmount = this.getTotalAmount();
+
     const saleData = {
       ...this.saleForm.value,
       totalAmount,
       date: new Date(this.saleForm.value.date)
     };
-    
-    // Submit sale
-    const success = this.transactionService.createSale(saleData);
-    
-    if (success) {
-      this.notificationService.success('Sale created successfully');
-      this.router.navigate(['/sales']);
-    } else {
-      this.notificationService.error('Failed to create sale. Please check inventory levels.');
-    }
+
+    this.transactionService.createSale(saleData).subscribe({
+      next: res => {
+        this.notificationService.success(res?.message || 'Sale created successfully');
+        this.router.navigate(['/sales']);
+      },
+      error: err => {
+        console.error(err);
+        this.notificationService.error('Failed to create sale. Please try again.');
+      }
+    });
   }
 
   getTotalAmount(): number {

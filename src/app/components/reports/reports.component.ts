@@ -1,9 +1,8 @@
-
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
 import { Item } from 'src/app/models/item.model';
-import { Purchase, Sale, Transaction } from 'src/app/models/transaction.model';
+import { Purchase, Sale, Transaction, TransactionType } from 'src/app/models/transaction.model';
 import { ItemService } from 'src/app/services/item.service';
 import { NotificationService } from 'src/app/services/notification.service';
 import { ReportService } from 'src/app/services/report.service';
@@ -17,13 +16,12 @@ import { TransactionService } from 'src/app/services/transaction.service';
 export class ReportsComponent implements OnInit {
   items: Item[] = [];
   lowStockItems: Item[] = [];
-  sales: Sale[] = [];
-  purchases: Purchase[] = [];
+  sales: any[] = [];
+  purchases: any[] = [];
   transactions: Transaction[] = [];
-  
+
   filterForm: FormGroup;
-  
-  // Chart configurations
+
   public barChartOptions: ChartConfiguration['options'] = {
     responsive: true,
     scales: {
@@ -38,24 +36,20 @@ export class ReportsComponent implements OnInit {
       }
     }
   };
-  
+
   public barChartType: ChartType = 'bar';
   public pieChartType: ChartType = 'pie';
-  
+
   public salesChartData: ChartData<'bar'> = {
     labels: [],
-    datasets: [
-      { data: [], label: 'Sales' }
-    ]
+    datasets: [{ data: [], label: 'Sales' }]
   };
-  
+
   public categoryChartData: ChartData<'pie'> = {
     labels: [],
-    datasets: [
-      { data: [] }
-    ]
+    datasets: [{ data: [] }]
   };
-  
+
   public pieChartOptions: ChartConfiguration['options'] = {
     responsive: true,
     plugins: {
@@ -65,7 +59,9 @@ export class ReportsComponent implements OnInit {
       }
     }
   };
-  
+  isChartVisible: boolean = false;
+  isShowCategoryChart: boolean = false;
+
   constructor(
     private itemService: ItemService,
     private transactionService: TransactionService,
@@ -84,7 +80,7 @@ export class ReportsComponent implements OnInit {
     const today = new Date();
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(today.getDate() - 30);
-    
+
     return this.fb.group({
       startDate: [thirtyDaysAgo.toISOString().split('T')[0]],
       endDate: [today.toISOString().split('T')[0]]
@@ -92,40 +88,49 @@ export class ReportsComponent implements OnInit {
   }
 
   loadData(): void {
-    // Load items
     this.itemService.getItems().subscribe(items => {
       this.items = items;
       this.lowStockItems = items.filter(item => item.quantity <= item.reorderLevel);
-      
-      // Prepare category chart data
-      const categories = this.itemService.getItemsByCategory();
+
+      // ✅ Updated category calculation using local items array
+      const categories: { [key: string]: number } = {};
+      items.forEach(item => {
+        if (categories[item.category]) {
+          categories[item.category]++;
+        } else {
+          categories[item.category] = 1;
+        }
+      });
+
       this.categoryChartData.labels = Object.keys(categories);
       this.categoryChartData.datasets[0].data = Object.values(categories);
+      this.isShowCategoryChart = true
     });
-    
-    // Load transactions based on date range
-    this.applyDateFilter();
-  }
-
-  applyDateFilter(): void {
-    const filters = this.filterForm.value;
+  const filters = this.filterForm.value;
     const startDate = new Date(filters.startDate);
     const endDate = new Date(filters.endDate);
-    endDate.setHours(23, 59, 59, 999); // End of day
+    endDate.setHours(23, 59, 59, 999);
     
-    // Load sales
-    this.sales = this.transactionService.getSalesByDateRange(startDate, endDate);
-    
-    // Load purchases
-    this.purchases = this.transactionService.getPurchasesByDateRange(startDate, endDate);
-    
-    // Load transactions
-    this.transactions = this.transactionService.getTransactionsByDateRange(startDate, endDate);
-    
-    // Prepare sales chart data
-    const dailySales = this.transactionService.getDailySalesData(startDate, endDate);
-    this.salesChartData.labels = dailySales.map(day => day.date);
-    this.salesChartData.datasets[0].data = dailySales.map(day => day.totalSales);
+    this.transactionService.getTransactionsByDateRange(startDate, endDate,TransactionType.SALE).subscribe(Sales => {
+      this.sales = Sales;
+  const groupedSales: { [date: string]: number } = {};
+  Sales.forEach(sale => {
+    const dateStr = new Date(sale.date).toLocaleDateString(); // "3/8/2025" etc.
+    if (!groupedSales[dateStr]) {
+      groupedSales[dateStr] = 0;
+    }
+    groupedSales[dateStr] += sale.totalAmount || 0;
+  });
+  const labels = Object.keys(groupedSales);
+  const data = Object.values(groupedSales);
+  this.salesChartData.labels = labels;
+  this.salesChartData.datasets[0].data = data;
+    this.isChartVisible = true;
+});
+    this.transactionService.getTransactionsByDateRange(startDate, endDate,TransactionType.PURCHASE).subscribe(purchases => {
+      this.purchases = purchases;
+    });
+
   }
 
   generateInventoryReport(): void {
@@ -138,8 +143,8 @@ export class ReportsComponent implements OnInit {
     const filters = this.filterForm.value;
     const startDate = new Date(filters.startDate);
     const endDate = new Date(filters.endDate);
-    endDate.setHours(23, 59, 59, 999); // End of day
-    
+    endDate.setHours(23, 59, 59, 999);
+
     const doc = this.reportService.generateSalesReport(this.sales, startDate, endDate);
     doc.save('Sales-Report.pdf');
     this.notificationService.success('Sales report generated successfully');
@@ -149,8 +154,8 @@ export class ReportsComponent implements OnInit {
     const filters = this.filterForm.value;
     const startDate = new Date(filters.startDate);
     const endDate = new Date(filters.endDate);
-    endDate.setHours(23, 59, 59, 999); // End of day
-    
+    endDate.setHours(23, 59, 59, 999);
+
     const doc = this.reportService.generatePurchaseReport(this.purchases, startDate, endDate);
     doc.save('Purchase-Report.pdf');
     this.notificationService.success('Purchase report generated successfully');

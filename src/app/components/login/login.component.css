@@ -1,6 +1,10 @@
 .login-wrapper {
   background: url('/assets/inventory-bg.jpg') no-repeat center center/cover;
-  height: 100vh; /* full height of viewport */
+  height: 100%; /* full height of viewport */
+  width: 100%; /* full width of viewport */
+  position: fixed; /* cover the entire viewport */
+  top: 0;
+  left: 0;
   display: flex;
   justify-content: center;
   align-items: center;

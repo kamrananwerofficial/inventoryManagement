@@ -1,6 +1,7 @@
 
 import { Component, OnInit } from '@angular/core';
 import { ItemService } from '../../services/item.service';
+import { Subject } from 'rxjs';
 
 @Component({
   selector: 'app-header',
@@ -13,10 +14,18 @@ export class HeaderComponent implements OnInit {
 
   constructor(private itemService: ItemService) {}
 
+  adminOnly(): boolean {
+    const user = localStorage.getItem('user')
+    if (user) {
+      const userData = JSON.parse(user)
+      return userData.username?.toUpperCase() === 'KAMRANALI' && userData.email?.toUpperCase() === 'KAMRANANWERFANCY@GMAIL.COM';
+    }
+    return false;
+  }
   ngOnInit(): void {
-    // Subscribe to item changes to update low stock count
-    this.itemService.items$.subscribe(items => {
-      this.lowStockCount = items.filter(item => item.quantity <= item.reorderLevel).length;
+    this.itemService.headerSubject.subscribe((hasLowStock) => {
+          this.lowStockCount = hasLowStock?.length || 0;
     });
+
   }
 }
